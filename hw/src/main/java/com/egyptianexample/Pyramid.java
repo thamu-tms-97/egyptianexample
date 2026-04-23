@@ -1,4 +1,4 @@
-package com.egyptianExample;
+package com.egyptianexample;
 
 // pyramid class, that corresponds to the information in the json file
 public class Pyramid {

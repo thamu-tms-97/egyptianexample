@@ -1,8 +1,10 @@
-package com.egyptianExample;
+package com.egyptianexample;
 
-import java.util.*;
-import org.json.simple.*;
-import org.json.simple.parser.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Scanner;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 public class EgyptianPyramidsAppExample {
 
@@ -17,19 +19,6 @@ public class EgyptianPyramidsAppExample {
     app.start();
   }
 
-  public void start() {
-    Scanner scan = new Scanner(System.in);
-    Character command = '_';
-
-    while (command != 'q') {
-      printMenu();
-      System.out.print("Enter a command: ");
-      command = menuGetCommand(scan);
-
-      executeCommand(scan, command);
-    }
-  }
-
   public EgyptianPyramidsAppExample() {
     String pharaohFile = "pharaoh.json";
     JSONArray pharaohJSONArray = JSONFile.readArray(pharaohFile);
@@ -40,10 +29,25 @@ public class EgyptianPyramidsAppExample {
     initializePyramid(pyramidJSONArray);
 
     requestedPyramidIds = new LinkedHashSet<>();
+
     pyramidMap = new HashMap<>();
     for (Pyramid p : pyramidArray) {
       pyramidMap.put(p.id, p);
     }
+  }
+
+  public void start() {
+    Scanner scan = new Scanner(System.in);
+    Character command = '_';
+
+    while (command != 'q') {
+      printMenu();
+      System.out.print("Enter a command: ");
+      command = menuGetCommand(scan);
+      executeCommand(scan, command);
+    }
+
+    scan.close();
   }
 
   private void initializePharaoh(JSONArray pharaohJSONArray) {
@@ -62,7 +66,7 @@ public class EgyptianPyramidsAppExample {
 
       Pharaoh p = new Pharaoh(id, name, begin, end, contribution, hieroglyphic);
       pharaohArray[i] = p;
-      hieroglyphicMap.put(hieroglyphic, p); 
+      hieroglyphicMap.put(hieroglyphic, p);
     }
   }
 
@@ -74,11 +78,12 @@ public class EgyptianPyramidsAppExample {
 
       Integer id = toInteger(o, "id");
       String name = o.get("name").toString();
+
       JSONArray contributorsJSONArray = (JSONArray) o.get("contributors");
       String[] contributors = new String[contributorsJSONArray.size()];
+
       for (int j = 0; j < contributorsJSONArray.size(); j++) {
-        String c = contributorsJSONArray.get(j).toString();
-        contributors[j] = c;
+        contributors[j] = contributorsJSONArray.get(j).toString();
       }
 
       Pyramid p = new Pyramid(id, name, contributors);
@@ -87,9 +92,7 @@ public class EgyptianPyramidsAppExample {
   }
 
   private Integer toInteger(JSONObject o, String key) {
-    String s = o.get(key).toString();
-    Integer result = Integer.parseInt(s);
-    return result;
+    return Integer.parseInt(o.get(key).toString());
   }
 
   private static Character menuGetCommand(Scanner scan) {
@@ -100,16 +103,54 @@ public class EgyptianPyramidsAppExample {
       rawInput = rawInput.toLowerCase();
       command = rawInput.charAt(0);
     }
+
     return command;
+  }
+
+  private void executeCommand(Scanner scan, Character command) {
+    if (command == '1') {
+      printAllPharaoh();
+    } else if (command == '2') {
+      displaySpecificPharaoh(scan);
+    } else if (command == '3') {
+      printAllPyramids();
+    } else if (command == '4') {
+      displaySpecificPyramid(scan);
+    } else if (command == '5') {
+      printRequestedPyramids();
+    } else if (command == 'q') {
+      System.out.println("Goodbye.");
+    } else {
+      System.out.println("ERROR: Unknown command.");
+    }
+  }
+
+  private void printMenu() {
+    printMenuLine();
+    System.out.println("Nassef's Egyptian Pyramids App");
+    printMenuLine();
+    System.out.printf("%-10s%-40s\n", "Command", "Description");
+    printMenuLine();
+    System.out.printf("%-10s%-40s\n", "1", "List all the pharaohs");
+    System.out.printf("%-10s%-40s\n", "2", "Displays a specific Egyptian pharaoh");
+    System.out.printf("%-10s%-40s\n", "3", "List all the pyramids");
+    System.out.printf("%-10s%-40s\n", "4", "Displays a specific pyramid");
+    System.out.printf("%-10s%-40s\n", "5", "Displays a list of requested pyramids.");
+    System.out.printf("%-10s%-40s\n", "q", "Quit");
+    printMenuLine();
+  }
+
+  private void printMenuLine() {
+    System.out.println("------------------------------------------------------------");
   }
 
   // Command 1
   private void printAllPharaoh() {
-    for (int i = 0; i < pharaohArray.length; i++) {
+    for (Pharaoh pharaoh : pharaohArray) {
       printMenuLine();
-      pharaohArray[i].print();
-      printMenuLine();
+      pharaoh.print();
     }
+    printMenuLine();
   }
 
   // Command 2
@@ -119,6 +160,7 @@ public class EgyptianPyramidsAppExample {
 
     try {
       int id = Integer.parseInt(input);
+
       if (id >= 0 && id < pharaohArray.length) {
         printMenuLine();
         pharaohArray[id].print();
@@ -133,17 +175,18 @@ public class EgyptianPyramidsAppExample {
 
   // Command 3
   private void printAllPyramids() {
-    for (int i = 0; i < pyramidArray.length; i++) {
+    for (Pyramid pyramid : pyramidArray) {
       printMenuLine();
-      Pyramid pyr = pyramidArray[i];
-      System.out.printf("Pyramid: %s (id: %d)\n", pyr.name, pyr.id);
-      System.out.println("  Contributors:");
-      for (String hieroglyphic : pyr.contributors) {
+      System.out.printf("Pyramid %s\n", pyramid.name);
+      System.out.printf("\tid: %d\n", pyramid.id);
+      System.out.println("\tcontributors:");
+
+      for (String hieroglyphic : pyramid.contributors) {
         Pharaoh pharaoh = hieroglyphicMap.get(hieroglyphic);
         if (pharaoh != null) {
-          System.out.printf("    - %s\n", pharaoh.name);
+          System.out.printf("\t\t%s\n", pharaoh.name);
         } else {
-          System.out.printf("    - [unknown hieroglyphic: %s]\n", hieroglyphic);
+          System.out.printf("\t\tunknown contributor: %s\n", hieroglyphic);
         }
       }
     }
@@ -167,19 +210,28 @@ public class EgyptianPyramidsAppExample {
       requestedPyramidIds.add(found.id);
 
       printMenuLine();
-      System.out.printf("Pyramid: %s (id: %d)\n", found.name, found.id);
-      System.out.println("  Contributors:");
+      System.out.printf("Pyramid %s\n", found.name);
+      System.out.printf("\tid: %d\n", found.id);
+      System.out.println("\tcontributors:");
 
       int total = 0;
+
       for (String hieroglyphic : found.contributors) {
         Pharaoh pharaoh = hieroglyphicMap.get(hieroglyphic);
+
         if (pharaoh != null) {
-          System.out.printf("    Name: %-25s  Gold: %d\n",
-              pharaoh.name, pharaoh.contribution);
+          System.out.printf(
+            "\t\tname: %s, gold: %d\n",
+            pharaoh.name,
+            pharaoh.contribution
+          );
           total += pharaoh.contribution;
+        } else {
+          System.out.printf("\t\tunknown contributor: %s\n", hieroglyphic);
         }
       }
-      System.out.printf("  Total Contribution: %d gold coins\n", total);
+
+      System.out.printf("\ttotal contribution: %d gold coins\n", total);
       printMenuLine();
 
     } catch (NumberFormatException e) {
@@ -194,79 +246,40 @@ public class EgyptianPyramidsAppExample {
       return;
     }
 
-    System.out.println("Requested Pyramids Report (no duplicates):");
-    for (int pyrId : requestedPyramidIds) {
-      Pyramid p = pyramidMap.get(pyrId);
-      if (p == null) continue;
-      printMenuLine();
-      System.out.printf("Pyramid: %s (id: %d)\n", p.name, p.id);
-      System.out.println("  Contributors:");
+    printMenuLine();
+    System.out.println("Requested Pyramids Report");
+    printMenuLine();
+
+    for (Integer pyramidId : requestedPyramidIds) {
+      Pyramid pyramid = pyramidMap.get(pyramidId);
+
+      if (pyramid == null) {
+        continue;
+      }
+
+      System.out.printf("Pyramid %s\n", pyramid.name);
+      System.out.printf("\tid: %d\n", pyramid.id);
+      System.out.println("\tcontributors:");
+
       int total = 0;
-      for (String hieroglyphic : p.contributors) {
+
+      for (String hieroglyphic : pyramid.contributors) {
         Pharaoh pharaoh = hieroglyphicMap.get(hieroglyphic);
+
         if (pharaoh != null) {
-          System.out.printf("    Name: %-25s  Gold: %d\n",
-              pharaoh.name, pharaoh.contribution);
+          System.out.printf(
+            "\t\tname: %s, gold: %d\n",
+            pharaoh.name,
+            pharaoh.contribution
+          );
           total += pharaoh.contribution;
+        } else {
+          System.out.printf("\t\tunknown contributor: %s\n", hieroglyphic);
         }
       }
-      System.out.printf("  Total Contribution: %d gold coins\n", total);
+
+      System.out.printf("\ttotal contribution: %d gold coins\n", total);
+      printMenuLine();
     }
-    printMenuLine();
-  }
-
-  private Boolean executeCommand(Scanner scan, Character command) {
-    Boolean success = true;
-
-    switch (command) {
-      case '1':
-        printAllPharaoh();
-        break;
-      case '2':
-        displaySpecificPharaoh(scan);
-        break;
-      case '3':
-        printAllPyramids();
-        break;
-      case '4':
-        displaySpecificPyramid(scan);
-        break;
-      case '5':
-        printRequestedPyramids();
-        break;
-      case 'q':
-        System.out.println("Thank you for using the Egyptian Pyramid App!");
-        break;
-      default:
-        System.out.println("ERROR: Unknown commmand");
-        success = false;
-    }
-
-    return success;
-  }
-
-  private static void printMenuCommand(Character command, String desc) {
-    System.out.printf("%s\t\t%s\n", command, desc);
-  }
-
-  private static void printMenuLine() {
-    System.out.println(
-      "--------------------------------------------------------------------------"
-    );
-  }
-
-  public static void printMenu() {
-    printMenuLine();
-    System.out.println("Egyptian Pyramids App");
-    printMenuLine();
-    System.out.printf("Command\t\tDescription\n");
-    System.out.printf("-------\t\t---------------------------------------\n");
-    printMenuCommand('1', "List all the pharoahs");
-    printMenuCommand('2', "Displays a specific Egyptian pharaoh");
-    printMenuCommand('3', "List all the pyramids");
-    printMenuCommand('4', "Displays a specific pyramid");
-    printMenuCommand('5', "Displays a list of requested pyramids.");
-    printMenuCommand('q', "Quit");
-    printMenuLine();
   }
 }
